@@ -1,0 +1,2 @@
+Fase atual: Uniform buffers and a 3D camera -> A controller for our camera
+Atualizar a matriz de projeção no evento resize()

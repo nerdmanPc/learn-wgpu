@@ -8,6 +8,7 @@ use futures::executor::block_on;
 mod texture;
 mod camera;
 mod model;
+mod instance;
 
 fn main() {
     env_logger::init();
@@ -81,6 +82,7 @@ struct State {
     model_state: model::ModelState,
     diffuse_state: texture::TextureState,
     camera_state: camera::CameraState,
+    instance_state: instance::State,
 
 } impl State {
     // Creating some of the wgpu types requires async code
@@ -116,6 +118,7 @@ struct State {
         let swap_chain = device.create_swap_chain(&surface, &sc_desc);
         let diffuse_state = texture::TextureState::new(&device, &queue);
         let camera_state = camera::CameraState::new(&device, sc_desc.width, sc_desc.height);
+        let instance_state = instance::State::new(&device);
         let clear_color = wgpu::Color {  //SET CLEAR COLOR
             r: 0.1,
             g: 0.2,
@@ -141,6 +144,7 @@ struct State {
             model_state,
             diffuse_state,
             camera_state,
+            instance_state,
         }
     }
 
@@ -166,7 +170,7 @@ struct State {
             vertex: wgpu::VertexState {
                 module: &vs_module,
                 entry_point: "main",
-                buffers: &[ model::Vertex::desc() ],
+                buffers: &[ model::Vertex::desc(), instance::InstanceRaw::desc() ],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &fs_module,
@@ -233,8 +237,16 @@ struct State {
             render_pass.set_bind_group(0, self.diffuse_state.bind_group(), &[]); 
             render_pass.set_bind_group(1, self.camera_state.bind_group(), &[]);
             render_pass.set_vertex_buffer(0, self.model_state.vertex_buffer().slice(..));
-            render_pass.set_index_buffer(self.model_state.index_buffer().slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..self.model_state.num_indices(), 0, 0..1);
+            render_pass.set_vertex_buffer(1, self.instance_state.buffer().slice(..));
+            render_pass.set_index_buffer(
+                self.model_state.index_buffer().slice(..), 
+                wgpu::IndexFormat::Uint16
+            );
+            render_pass.draw_indexed(
+                0..self.model_state.num_indices(), 
+                0, 
+                0..self.instance_state.num_instances() as u32
+            );
         }
         // submit will accept anything that implements IntoIter
         self.queue.submit(std::iter::once(encoder.finish()));

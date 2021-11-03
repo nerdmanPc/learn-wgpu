@@ -3,9 +3,11 @@ use std::mem::size_of;
 use wgpu::util::DeviceExt;
 
 pub struct ModelState {
+
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     num_indices: u32,
+
 } impl ModelState {
     pub fn new(device: &wgpu::Device) -> Self {
         let vertex_buffer = device.create_buffer_init(
@@ -33,8 +35,10 @@ pub struct ModelState {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
+
     position: [f32; 3],
     tex_coords: [f32; 2]
+    
 } impl Vertex {
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         return wgpu::VertexBufferLayout {
